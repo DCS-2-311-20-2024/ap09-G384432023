@@ -66,14 +66,14 @@ function init() {
   orbitControls.enableDamping = true;
 
   // モデルの読み込み(仮置き)
-  let xwing; // モデルを格納する変数
+  let mainModel; // モデルを格納する変数
   function loadModel() { // モデル読み込み関数の定義
     const loader = new GLTFLoader();
     loader.load(
-      "xwing.glb", // モデルのファイル
+      "blue_falcon_with_liberties_taken.glb", // モデルのファイル
         (gltf) => {  // 読み込み終了時に実行される関数
-        xwing = gltf.scene; // モデルのシーンを取り出す
-        scene.add(xwing); // Three.jsのシーンに追加する
+        mainModel = gltf.scene; // モデルのシーンを取り出す
+        scene.add(mainModel); // Three.jsのシーンに追加する
         // render(); // 描画開始
         setBackground();
       }
@@ -192,9 +192,9 @@ function init() {
 
   // モデルのコースに対する位置の移動(仮置き)
   function moveModel(x, y, z) {
-    xwing.position.x += x;
-    xwing.position.y += y;
-    xwing.position.z += z;
+    mainModel.position.x += x;
+    mainModel.position.y += y;
+    mainModel.position.z += z;
   }
 
   // Windowサイズの変更処理
@@ -207,18 +207,18 @@ function init() {
   // 描画処理
   // 描画のための変数(仮置き)
   const clock = new THREE.Clock();
-  const xwingPosition = new THREE.Vector3();
-  const xwingTarget = new THREE.Vector3();
+  const mainModelPosition = new THREE.Vector3();
+  const mainModelTarget = new THREE.Vector3();
   const cameraPosition = new THREE.Vector3();
   let model_x;
   let model_y;
   let model_z;
   // 描画関数
   function render() {
-    // xwing の位置と向きの設定(仮置き)
+    // mainModel の位置と向きの設定(仮置き)
     const elapsedTime = clock.getElapsedTime() / 30;
-    course.getPointAt(elapsedTime % 1, xwingPosition);
-    xwing.position.copy(xwingPosition);
+    course.getPointAt(elapsedTime % 1, mainModelPosition);
+    mainModel.position.copy(mainModelPosition);
     // モデルのコースに対する位置の変更(仮置き)
     if(param.moveModel_x) {
       model_x = 1;
@@ -236,8 +236,8 @@ function init() {
       model_z = 0;
     }
     moveModel(model_x, model_y, model_z); //
-    course.getPointAt((elapsedTime+0.01) % 1, xwingTarget);
-    xwing.lookAt(xwingTarget);
+    course.getPointAt((elapsedTime+0.01) % 1, mainModelTarget);
+    mainModel.lookAt(mainModelTarget);
 
     // 背景の切り替え(仮置き)
     if(param.background) {
@@ -250,11 +250,11 @@ function init() {
     }
     // カメラの位置の切り替え(仮置き)
     if(param.follow) {
-      // xwing後方から
-      cameraPosition.lerpVectors(xwingTarget, xwingPosition, 4);
+      // mainModel後方から
+      cameraPosition.lerpVectors(mainModelTarget, mainModelPosition, 4);
       cameraPosition.y += 2.5;
       camera.position.copy(cameraPosition);
-      camera.lookAt(xwing.position); // 飛行機を見る
+      camera.lookAt(mainModel.position); // 飛行機を見る
       camera.up.set(0,1,0); // カメラの上をy軸正の向きにする
     }
     else if(param.birdsEye) {
@@ -264,7 +264,7 @@ function init() {
     }
     else {
       camera.position.set(10,-10,10); // 下の方から
-      camera.lookAt(xwing.position); // 飛行機を見る
+      camera.lookAt(mainModel.position); // 飛行機を見る
       camera.up.set(0,1,0); // カメラの上をy軸正の向きにする
     }
     // コース表示の有無
