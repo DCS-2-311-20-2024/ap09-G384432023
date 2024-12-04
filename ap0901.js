@@ -25,6 +25,15 @@ function init() {
   gui.add(param, "birdsEye").name("俯瞰");
   gui.add(param, "course").name("コース");
   gui.add(param, "axes").name("座標軸");
+
+  // 描画のための変数
+  const clock = new THREE.Clock();
+  const xwingPosition = new THREE.Vector3();
+  const xwingTarget = new THREE.Vector3();
+  const cameraPosition = new THREE.Vector3();
+  let blockDBoo = false;
+  let speed = 20;
+
   // シーン作成
   const scene = new THREE.Scene();
 
@@ -87,6 +96,78 @@ function init() {
     light.lookAt(0,0,0);
     scene.add(light);
   }
+
+  // ブロックの生成
+  const blocksD = new THREE.Group();
+  function makeblocksD(){
+    // 赤ブロックを並べる
+    for (let i = 0; i < 5; i++) {
+      const block = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 3, 3),
+        new THREE.MeshLambertMaterial({color: "red"})
+      );
+      block.position.set(
+        Math.random() * 6 - 3,
+        0,
+        Math.random() * 200 - 75
+      )
+      block.geometry.computeBoundingBox();
+      blocksD.add(block);
+    }
+    // 青ブロックを並べる
+    for (let i = 0; i < 5; i++) {
+      const block = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 2, 2),
+        new THREE.MeshLambertMaterial({color: "green"})
+      );
+      block.position.set(
+        Math.random() * 8 - 3,
+        0,
+        Math.random() * 200 - 75
+      )
+      block.geometry.computeBoundingBox();
+      blocksD.add(block);
+    }
+    scene.add(blocksD);
+  }
+  function remakeblocksD() {
+    scene.remove(blocksD);
+    blocksD.clear();
+    makeblocksD();
+  }
+  
+  // ボールの作成
+  const ball = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 24, 24),
+    new THREE.MeshPhongMaterial({ color: null, shininess: 100, specular: 0xa0a0a0 })
+  );
+  ball.geometry.computeBoundingSphere();
+  scene.add(ball);
+
+  // 判定用ボックスの作成
+  const box1 = new THREE.Mesh(
+    new THREE.BoxGeometry(5, 0.1, 5),
+    new THREE.MeshLambertMaterial({color: 0x404040})
+  );
+  box1.position.set(0, 25, -175);
+  box1.geometry.computeBoundingBox();
+  scene.add(box1);
+
+  // ブロックの衝突検出
+  function blockCheck() {
+    let hit = false;
+    const sphere = ball.geometry.boundingSphere.clone();
+    sphere.translate(xwingTarget);
+    if (!hit) {
+      let boxD = box1.geometry.boundingBox.clone();
+      boxD.translate(box1.position);
+      if (boxD.intersectsSphere(sphere)) {
+        hit = true;
+        remakeblocksD();
+      }
+    }
+  }
+
 
   // 平面の作成
   const plane = new THREE.Mesh(
@@ -151,21 +232,23 @@ function init() {
   }
   function down() {
     if (rightPressed) {
-      moveModel(3);
+      if(xwingPosition.y > 25) {
+        moveModel(3);
+      } else {
+        moveModel(-3);
+      }
     } else if (leftPressed) {
-      moveModel(-3);
+      if(xwingPosition.y > 25) {
+        moveModel(-3);
+      } else {
+        moveModel(3);
+      }
     }
   }
 
   // 描画処理
-  // 描画のための変数
-  const clock = new THREE.Clock();
-  const xwingPosition = new THREE.Vector3();
-  const xwingTarget = new THREE.Vector3();
-  const cameraPosition = new THREE.Vector3();
-  let speed = 10;
   // 描画関数
-  function render() {
+  function render(time) {
     // xwing の位置と向きの設定
     const elapsedTime = clock.getElapsedTime() / speed;
     course.getPointAt(elapsedTime % 1, xwingPosition);
@@ -191,6 +274,10 @@ function init() {
       camera.lookAt(xwing.position); // 飛行機を見る
       camera.up.set(0,1,0); // カメラの上をy軸正の向きにする
     }
+    // ballの位置
+    ball.position.copy(xwingTarget);
+    // ブロック生成
+    blockCheck();
     // キー入力対応
     down();
     // // スコア更新
@@ -204,6 +291,7 @@ function init() {
     // 次のフレームでの描画要請
     requestAnimationFrame(render);
   }
+  
 }
 
 init();
