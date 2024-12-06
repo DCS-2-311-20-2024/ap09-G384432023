@@ -23,9 +23,9 @@ function init() {
 
   // GUIコントローラの設定
   const gui = new GUI();
-  gui.add(param, "opacity", 0.0, 1.0).name("ballの透明度")
+  gui.add(param, "opacity", 0.0, 1.0).name("modelBoxの透明度")
     .onChange(() => {
-      ball.material.opacity = param.opacity;
+     modelBox.material.opacity = param.opacity;
     });
   gui.add(param, "follow").name("追跡");
   gui.add(param, "birdsEye").name("俯瞰");
@@ -34,12 +34,7 @@ function init() {
   gui.add(param, "speedUp").name("スピード2倍モード");
 
 
-  // 描画のための変数
-  const clock = new THREE.Clock();
-  const xwingPosition = new THREE.Vector3();
-  const xwingTarget = new THREE.Vector3();
-  const cameraPosition = new THREE.Vector3();
-  let speed = 20;
+  
 
 
   // シーン作成
@@ -125,7 +120,7 @@ function init() {
   // モデルの横移動
   function moveModel(x) {
     xwing.position.x += x;
-    ball.position.x += x;
+    modelBox.position.x += x;
   }
 
   // キー操作対応
@@ -149,13 +144,13 @@ function init() {
   }
   function down() {
     if (rightPressed) {
-      if(xwingPosition.y > 25) {
+      if(xwing.position.y > 25) {
         moveModel(3);
       } else {
         moveModel(-3);
       }
     } else if (leftPressed) {
-      if(xwingPosition.y > 25) {
+      if(xwing.position.y > 25) {
         moveModel(-3);
       } else {
         moveModel(3);
@@ -241,19 +236,18 @@ function init() {
     makeblocksU();
   }
   
-  // 判定用ballの作成
-  let ball = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 24, 24),
+  // モデル側の当たり判定modelBoxの作成
+  let modelBox;
+  modelBox = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 1, 2),
     new THREE.MeshPhongMaterial({ 
-      color: null, 
-      shininess: 100, 
-      specular: 0xa0a0a0, 
+      color: 0xFFFFFF,
       opacity: param.opacity,
       transparent: true
     })
   );
-  ball.geometry.computeBoundingSphere();
-  scene.add(ball);
+  modelBox.geometry.computeBoundingBox();
+  scene.add (modelBox);
 
   // 下段移動判定用ボックスの作成
   const box1 = new THREE.Mesh(
@@ -275,58 +269,49 @@ function init() {
   // 上下段移動判定用ボックスの通過、赤緑ボックスの衝突判定
   function blockCheck() {
     let hit = false;
-    const sphere = ball.geometry.boundingSphere.clone();
-    sphere.translate(xwingPosition);
+    const modelBoxC = new THREE.Box3().setFromObject(modelBox);
     if (!hit) {
       // 上下段移動判定用ボックスの通過
-      let boxD = box1.geometry.boundingBox.clone();
-      boxD.translate(box1.position);
-      let boxU = box2.geometry.boundingBox.clone();
-      boxU.translate(box2.position);
-      if (boxD.intersectsSphere(sphere)) {
+      let boxD = new THREE.Box3().setFromObject(box1);
+      let boxU = new THREE.Box3().setFromObject(box2);
+      if (boxD.intersectsBox(modelBoxC)) {
         hit = true;
         remakeblocksD();
-      } else if (boxU.intersectsSphere(sphere)) {
+      } else if (boxU.intersectsBox(modelBoxC)) {
         hit = true;
         remakeblocksU();
       }
       // 赤緑ボックスの衝突判定
       blocksD.children.forEach((blockR) => {
-        let block1 = blockR.geometry.boundingBox.clone();
-        block1.translate(blockR.position);
-        if(block1.intersectsSphere(sphere)) {
+        let block1 = new THREE.Box3().setFromObject(blockR);
+        if(block1.intersectsBox(modelBoxC)) {
           hit = true;
           blockR.visible = false;
         }
       })
       blocksD.children.forEach((blockG) => {
-        let block2 = blockG.geometry.boundingBox.clone();
-        block2.translate(blockG.position);
-        if(block2.intersectsSphere(sphere)) {
+        let block2 = new THREE.Box3().setFromObject(blockG);
+        if(block2.intersectsBox(modelBoxC)) {
           hit = true;
           blockG.visible = false;
         }
       })
       blocksU.children.forEach((blockR) => {
-        let block3 = blockR.geometry.boundingBox.clone();
-        block3.translate(blockR.position);
-        if(block3.intersectsSphere(sphere)) {
+        let block3 = new THREE.Box3().setFromObject(blockR);
+        if(block3.intersectsBox(modelBoxC)) {
           hit = true;
           blockR.visible = false;
         }
       })
       blocksU.children.forEach((blockG) => {
-        let block4 = blockG.geometry.boundingBox.clone();
-        block4.translate(blockG.position);
-        if(block4.intersectsSphere(sphere)) {
+        let block4 = new THREE.Box3().setFromObject(blockG);
+        if(block4.intersectsBox(modelBoxC)) {
           hit = true;
           blockG.visible = false;
         }
       })
     }
   }
-
-  
 
 
   // 平面の作成
@@ -373,6 +358,12 @@ function init() {
 
 
   // 描画処理
+  // 描画のための変数
+  const clock = new THREE.Clock();
+  const xwingPosition = new THREE.Vector3();
+  const xwingTarget = new THREE.Vector3();
+  const cameraPosition = new THREE.Vector3();
+  let speed = 20;
   // 描画関数
   function render(time) {
     // xwing の位置と向きの設定
@@ -401,8 +392,6 @@ function init() {
       camera.up.set(0,1,0); // カメラの上をy軸正の向きにする
     }
 
-    // ballの位置
-    ball.position.copy(xwingPosition);
 
     // ブロック生成
     blockCheck();
@@ -412,6 +401,9 @@ function init() {
 
     // キー入力対応
     down();
+    
+    // modelBoxの位置
+   modelBox.position.copy(xwing.position);
 
     // // スコア更新
     // setScore(score);
