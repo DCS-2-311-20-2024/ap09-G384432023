@@ -18,7 +18,6 @@ function init() {
     birdsEye: false, // 俯瞰
     course: true, // コース
     axes: true, // 座標軸
-    speedUp: false, // スピード2倍(検証用)
   };
 
   // GUIコントローラの設定
@@ -31,7 +30,6 @@ function init() {
   gui.add(param, "birdsEye").name("俯瞰");
   gui.add(param, "course").name("コース");
   gui.add(param, "axes").name("座標軸");
-  gui.add(param, "speedUp").name("スピード2倍モード");
 
 
   
@@ -47,14 +45,14 @@ function init() {
 
 
   // スコア表示
-  // let score = 0;
-  // let life = 3;
-  // function setScore(score) {
-  //   document.getElementById("score").innerText
-  //     = String(Math.round(score)).padStart(8, "0");
+  let score = 0;
+  let life = 3;
+  function setScore(score) {
+    document.getElementById("score").innerText
+      = String(Math.round(score)).padStart(8, "0");
   //   document.getElementById("life").innerText
   //     = (life > 0) ? "○○○".substring(0, life) : "-- Game Over --";
-  // }
+  }
 
 
   // カメラの作成
@@ -90,16 +88,6 @@ function init() {
     );
   }
   loadModel(); // モデル読み込み実行
-
-  // モデルのスピード変更
-  function modelSpeedChange() {
-    if(param.speedUp) {
-      speed = 10;
-    } else {
-      speed = 20;
-    }
-  }
-
 
   // 光源の設定
   // 環境ライト
@@ -160,86 +148,94 @@ function init() {
 
   // ブロックの生成
   // 下段用ブロック
-  const blocksD = new THREE.Group();
+  const blocksDR = new THREE.Group();
+  const blocksDG = new THREE.Group();
   function makeblocksD(){
     // 赤ブロックを並べる
     for (let i = 0; i < 3; i++) {
-      const blockR = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 2, 2),
+      const blockDR = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 4, 2),
         new THREE.MeshLambertMaterial({color: "red"})
       );
-      blockR.position.set(
+      blockDR.position.set(
         Math.random() * 6 - 3,
         -1,
         Math.random() * 200 - 75
       )
-      blockR.geometry.computeBoundingBox();
-      blocksD.add(blockR);
+      blockDR.geometry.computeBoundingBox();
+      blocksDR.add(blockDR);
     }
     // 緑ブロックを並べる
     for (let i = 0; i < 5; i++) {
-      const blockG = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 2, 2),
+      const blockDG = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 4, 2),
         new THREE.MeshLambertMaterial({color: "green"})
       );
-      blockG.position.set(
+      blockDG.position.set(
         Math.random() * 8 - 3,
         -1,
         Math.random() * 200 - 75
       )
-      blockG.geometry.computeBoundingBox();
-      blocksD.add(blockG);
+      blockDG.geometry.computeBoundingBox();
+      blocksDG.add(blockDG);
     }
-    scene.add(blocksD);
+    scene.add(blocksDR);
+    scene.add(blocksDG);
   }
   function remakeblocksD() {
-    scene.remove(blocksD);
-    blocksD.clear();
+    scene.remove(blocksDR);
+    blocksDR.clear();
+    scene.remove(blocksDG);
+    blocksDG.clear();
     makeblocksD();
   }
   // 上段用ブロック
-  const blocksU = new THREE.Group();
+  const blocksUR = new THREE.Group();
+  const blocksUG = new THREE.Group();
   function makeblocksU(){
     // 赤ブロックを並べる
     for (let i = 0; i < 3; i++) {
-      const blockR = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 3, 2),
+      const blockUR = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 4, 2),
         new THREE.MeshLambertMaterial({color: "red"})
       );
-      blockR.position.set(
+      blockUR.position.set(
         Math.random() * 6 - 3,
-        50,
-        Math.random() * 200 - 75
+        51,
+        Math.random() * 175 - 75
       )
-      blockR.geometry.computeBoundingBox();
-      blocksU.add(blockR);
+      blockUR.geometry.computeBoundingBox();
+      blocksUR.add(blockUR);
     }
     // 緑ブロックを並べる
     for (let i = 0; i < 5; i++) {
-      const blockG = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 3, 2),
+      const blockUG = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 4, 2),
         new THREE.MeshLambertMaterial({color: "green"})
       );
-      blockG.position.set(
+      blockUG.position.set(
         Math.random() * 8 - 3,
-        50,
-        Math.random() * 200 - 75
+        51,
+        Math.random() * 175 - 75
       )
-      blockG.geometry.computeBoundingBox();
-      blocksU.add(blockG);
+      blockUG.geometry.computeBoundingBox();
+      blocksUG.add(blockUG);
     }
-    scene.add(blocksU);
+    scene.add(blocksUR);
+    scene.add(blocksUG);
   }
   function remakeblocksU() {
-    scene.remove(blocksU);
-    blocksU.clear();
+    scene.remove(blocksUR);
+    blocksUR.clear();
+    scene.remove(blocksUG);
+    blocksUG.clear();
     makeblocksU();
   }
   
   // モデル側の当たり判定modelBoxの作成
   let modelBox;
   modelBox = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 1, 2),
+    new THREE.BoxGeometry(2, 3, 2),
     new THREE.MeshPhongMaterial({ 
       color: 0xFFFFFF,
       opacity: param.opacity,
@@ -267,60 +263,66 @@ function init() {
   scene.add(box2);
 
   // 上下段移動判定用ボックスの通過、赤緑ボックスの衝突判定
-  function blockCheck() {
-    let hit = false;
-    const modelBoxC = new THREE.Box3().setFromObject(modelBox);
-    if (!hit) {
-      // 上下段移動判定用ボックスの通過
-      let boxD = new THREE.Box3().setFromObject(box1);
-      let boxU = new THREE.Box3().setFromObject(box2);
-      if (boxD.intersectsBox(modelBoxC)) {
-        hit = true;
-        remakeblocksD();
-      } else if (boxU.intersectsBox(modelBoxC)) {
-        hit = true;
-        remakeblocksU();
-      }
-      // 赤緑ボックスの衝突判定
-      blocksD.children.forEach((blockR) => {
-        let block1 = new THREE.Box3().setFromObject(blockR);
-        if(block1.intersectsBox(modelBoxC)) {
-          hit = true;
-          blockR.visible = false;
-        }
-      })
-      blocksD.children.forEach((blockG) => {
-        let block2 = new THREE.Box3().setFromObject(blockG);
-        if(block2.intersectsBox(modelBoxC)) {
-          hit = true;
-          blockG.visible = false;
-        }
-      })
-      blocksU.children.forEach((blockR) => {
-        let block3 = new THREE.Box3().setFromObject(blockR);
-        if(block3.intersectsBox(modelBoxC)) {
-          hit = true;
-          blockR.visible = false;
-        }
-      })
-      blocksU.children.forEach((blockG) => {
-        let block4 = new THREE.Box3().setFromObject(blockG);
-        if(block4.intersectsBox(modelBoxC)) {
-          hit = true;
-          blockG.visible = false;
-        }
-      })
+  
+  function UDCheck() {
+    const modelBox1 = new THREE.Box3().setFromObject(modelBox);
+    // 上下段移動判定用ボックスの通過
+    const boxD = new THREE.Box3().setFromObject(box1);
+    const boxU = new THREE.Box3().setFromObject(box2);
+    if (boxD.intersectsBox(modelBox1)) {
+      remakeblocksD();
+    } else if (boxU.intersectsBox(modelBox1)) {
+      remakeblocksU();
     }
+  }
+
+  function blockCheckD() {
+    const modelBox2 = new THREE.Box3().setFromObject(modelBox);
+    // 赤緑ボックスの衝突判定
+    // 下段赤
+    blocksDR.children.forEach((blockDR) => {
+      const block1 = new THREE.Box3().setFromObject(blockDR);
+      if(block1.intersectsBox(modelBox2) && blockDR.visible) {
+        blockDR.visible = false;
+      }
+    });
+    // 下段緑
+    blocksDG.children.forEach((blockDG) => {
+      const block2 = new THREE.Box3().setFromObject(blockDG);
+      if(block2.intersectsBox(modelBox2) && blockDG.visible) {
+        score += 100;
+        blockDG.visible = false;
+      }
+    });
+  }
+
+  function blockCheckU() {
+    const modelBox3 = new THREE.Box3().setFromObject(modelBox);
+    // 上段赤
+    blocksUR.children.forEach((blockUR) => {
+      const block3 = new THREE.Box3().setFromObject(blockUR);
+      if(block3.intersectsBox(modelBox3) && blockUR.visible) {
+        blockUR.visible = false;
+      }
+    });
+    // 上段緑
+    blocksUG.children.forEach((blockUG) => {
+      const block4 = new THREE.Box3().setFromObject(blockUG);
+      if(block4.intersectsBox(modelBox3) && blockUG.visible) {
+        score += 100;
+        blockUG.visible = false;
+      }
+    });
   }
 
 
   // 平面の作成
-  const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(300, 300),
-    new THREE.MeshLambertMaterial({ color: 0x404040 }));
-  plane.rotation.x = -Math.PI / 2;
-  plane.position.y = -5;
-  scene.add(plane);
+  // const plane = new THREE.Mesh(
+  //   new THREE.PlaneGeometry(300, 300),
+  //   new THREE.MeshLambertMaterial({ color: 0x404040 }));
+  // plane.rotation.x = -Math.PI / 2;
+  // plane.position.y = -5;
+  // scene.add(plane);
 
 
   // 自動操縦コースの設定
@@ -363,11 +365,10 @@ function init() {
   const xwingPosition = new THREE.Vector3();
   const xwingTarget = new THREE.Vector3();
   const cameraPosition = new THREE.Vector3();
-  let speed = 20;
   // 描画関数
-  function render(time) {
+  function render() {
     // xwing の位置と向きの設定
-    const elapsedTime = clock.getElapsedTime() / speed;
+    const elapsedTime = clock.getElapsedTime() / 10;
     course.getPointAt(elapsedTime % 1, xwingPosition);
     xwing.position.copy(xwingPosition);
     course.getPointAt((elapsedTime+0.01) % 1, xwingTarget);
@@ -392,12 +393,15 @@ function init() {
       camera.up.set(0,1,0); // カメラの上をy軸正の向きにする
     }
 
+    // 上下位置の判定
+    UDCheck();
 
-    // ブロック生成
-    blockCheck();
+    // ブロックとの判定
+    blockCheckD();
+    blockCheckU();
 
-    // スピード変更
-    modelSpeedChange();
+    // スコア更新
+    setScore(score);
 
     // キー入力対応
     down();
